@@ -8,7 +8,7 @@ from flask import Flask, request, render_template
 from solc import compile_source
 import vyper
 from vyper import compiler
-
+from web3.auto import w3
 
 # web3 is needed to interact with eth contracts
 from web3 import Web3, HTTPProvider
@@ -68,8 +68,8 @@ token_factory = eth_provider.contract(
 token_constructor = token_factory.constructor(token_d['token_name'].encode('utf-8'),token_d['token_symbol'].encode('utf-8'),\
                                               token_d['token_decimal'],token_d['token_initialSupply'])
 token_transaction_hash = token_constructor.transact(transaction_details)
-transaction_receipt = eth_provider.getTransactionReceipt(token_transaction_hash)
-token_address = transaction_receipt['contractAddress']
+transaction_receipt_token = eth_provider.getTransactionReceipt(token_transaction_hash)
+token_address = transaction_receipt_token['contractAddress']
 token_instance = eth_provider.contract(
         abi=token_abi,
         address=token_address,
@@ -94,7 +94,7 @@ contract_factory = eth_provider.contract(
 # if we wanted to deploy two contracts, each with different candidates, we could call the
 # constructor() function twice, each time with different candidates.
 
-contract_constructor = contract_factory.constructor(500,10,10,10,'0x00232f5C54daFd27532675D010aE8aCDe5C62696')
+contract_constructor = contract_factory.constructor(500,10,10,10,token_address)
 print('Contract ABI')
 print(contract_abi)
 print('Contract Bytecode')
@@ -112,7 +112,7 @@ print(transaction_hash)
 # to get the full transaction details, then we get the contract address from there
 transaction_receipt = eth_provider.getTransactionReceipt(transaction_hash)
 contract_address = transaction_receipt['contractAddress']
-print(contract_address)
+print('contract address:',contract_address)
 contract_instance = eth_provider.contract(
     abi=contract_abi,
     address=contract_address,
@@ -122,6 +122,8 @@ contract_instance = eth_provider.contract(
     # parent class, allowing us to make calls like: contract_instance.someFunctionHere()
     ContractFactoryClass=ConciseContract,
 )
+global contract_address_set
+contract_address_set = contract_address
 
 
 
@@ -132,13 +134,38 @@ def index():
     get_info = contract_instance.get_ballance_of_depo()
     print(get_info)
 
-    tx = token_instance.transact({'from': default_account}).transfer(contract_address, web3.toWei('10000','ether'))
     balance = token_instance.functions.balanceOf(default_account).call()
     symbol = token_instance.functions.symbol().call()
     print(balance)
     print(web3.toWei('10000','ether'))
-    print(tx)
     print(symbol)
+    nonce = eth_provider.getTransactionCount(default_account)
+    print(nonce)
+    print('Ether to wei:',w3.toWei('1','ether'))
+    print('Balance of contract:',token_instance.functions.balanceOf(contract_address).call())
+    contract_address_from = web3.toChecksumAddress(contract_address)
+    own_address = web3.toChecksumAddress(default_account)
+    # address to '0x4776e07A2A155410F601e3e0bfBbA7242a35493a' 0x3143ae291f6f04d22affc9f66578eff22f47aef3
+
+    txn = token_instance.functions.transfer(contract_address_from,w3.toWei('598.999','ether')).buildTransaction(
+                                                              {
+                                                               'chainId': 5777,
+                                                               'gas': 1000000,
+                                                               'gasPrice': w3.toWei('43', 'wei'),
+                                                               'nonce': nonce, })
+    print(txn)
+
+    privat_key = 'dbe4c88319b4103a56f0dc16c431a487f88a023a33adb45273b38731bf3f610b'
+    #privat_key = bytes(_key, 'utf-8')
+
+    signed_txn = w3.eth.account.signTransaction(txn, private_key=privat_key)
+    print(signed_txn)
+
+    result = eth_provider.sendRawTransaction(signed_txn.rawTransaction)
+    print(result)
+    result_txn = w3.toHex(w3.sha3(signed_txn.rawTransaction))
+    print(result_txn)
+
 
     return render_template('index.html', candidates=candidates, alert=alert,owner=default_account,token = token_address,smartAddress = contract_address)
 
