@@ -156,8 +156,14 @@ def index():
                                                                'nonce': nonce, })
     print(txn)
 
-    privat_key = 'ed17cbc7a34e2e9c487c36c02f75cf1d93569688caa69a44215c9c4bcf829d03'
-    #privat_key = bytes(_key, 'utf-8')
+    if 'private_key' in dict_values.keys():
+        privat_key = dict_values['private_key']
+    else:
+        try:
+            private_key_file = open('./private_key','r')
+            privat_key = private_key.read()
+        except:
+            pass
 
     signed_txn = w3.eth.account.signTransaction(txn, private_key=privat_key)
     print(signed_txn)
