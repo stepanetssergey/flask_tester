@@ -1,0 +1,13 @@
+1. Install Ganache js visual enviroment like testrpc
+For installation:
+ virtualenv -p python3.6 ./your_folder
+ git clone ....
+ cd ./flask_tester
+ pip install -r ./requerements.txt 
+
+
+For starting of flesk python ./main.py
+
+2. This tool for deploy token, and then deploy smart contract
+3. Than tokens automaticaly will send to smart contract
+4. In the path localhost:5000 you'll see token address, smart contract address and address of owner
