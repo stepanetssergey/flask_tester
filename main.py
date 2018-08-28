@@ -41,16 +41,6 @@ transaction_details = {
     'from': default_account,
 }
 
-# load our Solidity code into an object
-with open('voting.sol') as file:
-    source_code = file.readlines()
-
-# compile the contract
-compiled_code = compile_source(''.join(source_code))
-
-# store contract_name so we keep our code DRY
-contract_name = 'Voting'
-
 #Deploy tokens
 
 token_to_deploy = open('./vypercoin.vy','r')
@@ -124,13 +114,24 @@ contract_instance = eth_provider.contract(
 )
 global contract_address_set
 contract_address_set = contract_address
+dict_values = {}
+private_key = ''
 
+@app.route('/setting', methods=['GET','POST'])
+def setting():
+    private_key_get = request.form.get('private_key')
+    print(request.form.get('private_key'))
+    if private_key_get is not None:
+        private_key = private_key_get
+        dict_values.update({'private_key':private_key})
+        print(private_key)
+    else:
+        private_key = ''
 
+    return render_template('settings.html', private_key=private_key)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    alert = ''
-    candidates = {'first':23}
     get_info = contract_instance.get_ballance_of_depo()
     print(get_info)
 
@@ -155,7 +156,7 @@ def index():
                                                                'nonce': nonce, })
     print(txn)
 
-    privat_key = 'dbe4c88319b4103a56f0dc16c431a487f88a023a33adb45273b38731bf3f610b'
+    privat_key = 'ed17cbc7a34e2e9c487c36c02f75cf1d93569688caa69a44215c9c4bcf829d03'
     #privat_key = bytes(_key, 'utf-8')
 
     signed_txn = w3.eth.account.signTransaction(txn, private_key=privat_key)
@@ -167,7 +168,7 @@ def index():
     print(result_txn)
 
 
-    return render_template('index.html', candidates=candidates, alert=alert,owner=default_account,token = token_address,smartAddress = contract_address)
+    return render_template('index.html', owner=default_account,token = token_address,smartAddress = contract_address)
 
 
 if __name__ == '__main__':

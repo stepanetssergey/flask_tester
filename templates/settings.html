@@ -1,0 +1,15 @@
+<html>
+  <form action="/setting" method="POST">
+      <div class="form-group row">
+          <label for="private_key" class="col-md-3 col-form-label">Private key:</label>
+          <div class="col-md-3">
+            <input id="private_key" type="text" name="private_key" class="form-control" required value="{{ private_key }}"/>
+          </div>
+          <br><br>
+          <div class="col-md-2">
+              <button type="submit" class="btn btn-primary">Save Key</button>
+          </div>
+      </div>
+  </form>
+
+</html>
